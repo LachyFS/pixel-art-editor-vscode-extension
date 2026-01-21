@@ -48,24 +48,26 @@ export function ColorPicker({ color, onColorChange }: ColorPickerProps) {
 
   return (
     <div className="color-picker">
+      <span className="section-label">Color</span>
+
       {/* Current Color Preview */}
       <div className="color-preview-section">
         <div
           className="color-preview"
           style={{ backgroundColor: color }}
-          title={color}
+          title={`Current: ${color}`}
         />
         <input
           type="color"
           value={color}
           onChange={handleNativeColorChange}
           className="color-input-native"
-          title="Pick custom color"
+          title="Open color picker"
         />
         <button
           className="add-color-button"
           onClick={handleAddToCustomPalette}
-          title="Add to custom palette"
+          title="Save to palette"
         >
           +
         </button>
@@ -73,28 +75,31 @@ export function ColorPicker({ color, onColorChange }: ColorPickerProps) {
 
       {/* Hex Input */}
       <div className="hex-input-section">
-        <label htmlFor="hex-input">#</label>
-        <input
-          id="hex-input"
-          type="text"
-          value={hexInput.replace('#', '')}
-          onChange={(e) => {
-            const val = e.target.value.replace('#', '');
-            setHexInput('#' + val);
-            if (/^[0-9A-Fa-f]{6}$/.test(val)) {
-              handleColorSelect('#' + val);
-            }
-          }}
-          placeholder="000000"
-          className="hex-input"
-          maxLength={6}
-        />
+        <span className="hex-label">Hex</span>
+        <div className="hex-input-wrapper">
+          <span className="hex-hash">#</span>
+          <input
+            id="hex-input"
+            type="text"
+            value={hexInput.replace('#', '')}
+            onChange={(e) => {
+              const val = e.target.value.replace('#', '');
+              setHexInput('#' + val);
+              if (/^[0-9A-Fa-f]{6}$/.test(val)) {
+                handleColorSelect('#' + val);
+              }
+            }}
+            placeholder="000000"
+            className="hex-input"
+            maxLength={6}
+          />
+        </div>
       </div>
 
       {/* Custom Palette */}
       {customPalette.length > 0 && (
         <div className="color-section">
-          <span className="section-label">Custom</span>
+          <span className="section-label">Saved Colors</span>
           <div className="color-palette">
             {customPalette.map((c, i) => (
               <button

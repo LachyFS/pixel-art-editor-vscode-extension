@@ -18,6 +18,8 @@ function App() {
   const [opacity, setOpacity] = useState(1);
   const [showResizeDialog, setShowResizeDialog] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [showGrid, setShowGrid] = useState(true);
+  const [zoom, setZoom] = useState(1);
   const previousToolRef = useRef<Tool>('pencil');
   const editCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -345,6 +347,9 @@ function App() {
           case 'escape':
             setSelection(null);
             break;
+          case '#':
+            setShowGrid((prev) => !prev);
+            break;
         }
       }
     };
@@ -393,10 +398,22 @@ function App() {
               onColorPick={handleColorPick}
               selection={selection}
               onSelectionChange={setSelection}
+              showGrid={showGrid}
+              onZoomChange={setZoom}
             />
           ) : (
             <div className="loading">Loading image...</div>
           )}
+          <div className="canvas-overlay">
+            <button
+              className={`overlay-button ${showGrid ? 'active' : ''}`}
+              onClick={() => setShowGrid(!showGrid)}
+              title="Toggle Grid (#)"
+            >
+              #
+            </button>
+            <span className="overlay-info">{Math.round(zoom * 100)}%</span>
+          </div>
         </main>
       </div>
       <footer className="footer">

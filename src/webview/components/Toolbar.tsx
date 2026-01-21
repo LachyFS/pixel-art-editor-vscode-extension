@@ -49,29 +49,32 @@ export function Toolbar({
     <div className="toolbar">
       {/* Undo/Redo */}
       <div className="toolbar-section">
+        <label className="toolbar-label">History</label>
         <div className="toolbar-row">
           <button
-            className="toolbar-action-button"
+            className="toolbar-action-button with-label"
             onClick={onUndo}
             disabled={!canUndo}
             title="Undo (Ctrl+Z)"
           >
-            ↶
+            <span className="btn-icon">↶</span>
+            <span className="btn-text">Undo</span>
           </button>
           <button
-            className="toolbar-action-button"
+            className="toolbar-action-button with-label"
             onClick={onRedo}
             disabled={!canRedo}
             title="Redo (Ctrl+Y)"
           >
-            ↷
+            <span className="btn-icon">↷</span>
+            <span className="btn-text">Redo</span>
           </button>
         </div>
       </div>
 
       <div className="toolbar-divider" />
 
-      {/* Tools Grid - Aseprite style */}
+      {/* Tools Grid */}
       <div className="toolbar-section">
         <label className="toolbar-label">Tools</label>
         <div className="tool-grid">
@@ -83,6 +86,7 @@ export function Toolbar({
               title={t.shortcut ? `${t.label} (${t.shortcut})` : t.label}
             >
               <span className="tool-icon">{t.icon}</span>
+              <span className="tool-label">{t.label}</span>
               {t.shortcut && <span className="tool-shortcut">{t.shortcut}</span>}
             </button>
           ))}
@@ -93,7 +97,7 @@ export function Toolbar({
 
       {/* Brush Settings */}
       <div className="toolbar-section">
-        <label className="toolbar-label">Size</label>
+        <label className="toolbar-label">Brush Size</label>
         <div className="brush-size-row">
           <div className="brush-preview-container">
             <div
@@ -114,7 +118,7 @@ export function Toolbar({
                 onChange={(e) => onBrushSizeChange(parseInt(e.target.value))}
                 className="toolbar-slider"
               />
-              <span className="toolbar-value">{brushSize}</span>
+              <span className="toolbar-value">{brushSize}px</span>
             </div>
           </div>
         </div>
@@ -140,36 +144,38 @@ export function Toolbar({
       {/* Transform */}
       <div className="toolbar-section">
         <label className="toolbar-label">Transform</label>
-        <div className="toolbar-row">
+        <div className="transform-grid">
           <button
-            className="toolbar-action-button"
+            className="transform-button"
             onClick={onFlipHorizontal}
             title="Flip Horizontal"
           >
-            ⇆
+            <span className="btn-icon">⇆</span>
+            <span className="btn-text">Flip H</span>
           </button>
           <button
-            className="toolbar-action-button"
+            className="transform-button"
             onClick={onFlipVertical}
             title="Flip Vertical"
           >
-            ⇅
+            <span className="btn-icon">⇅</span>
+            <span className="btn-text">Flip V</span>
           </button>
-        </div>
-        <div className="toolbar-row" style={{ marginTop: '2px' }}>
           <button
-            className="toolbar-action-button"
+            className="transform-button"
             onClick={onRotateCCW}
-            title="Rotate 90° CCW"
+            title="Rotate 90° Counter-Clockwise"
           >
-            ↺
+            <span className="btn-icon">↺</span>
+            <span className="btn-text">Rotate</span>
           </button>
           <button
-            className="toolbar-action-button"
+            className="transform-button"
             onClick={onRotateCW}
-            title="Rotate 90° CW"
+            title="Rotate 90° Clockwise"
           >
-            ↻
+            <span className="btn-icon">↻</span>
+            <span className="btn-text">Rotate</span>
           </button>
         </div>
       </div>

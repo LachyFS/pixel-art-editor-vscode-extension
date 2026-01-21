@@ -29,6 +29,8 @@ interface CanvasProps {
   onColorPick: (color: string) => void;
   onSelectionChange?: (selection: Selection | null) => void;
   selection?: Selection | null;
+  showGrid?: boolean;
+  onZoomChange?: (zoom: number) => void;
 }
 
 export function Canvas({
@@ -41,6 +43,8 @@ export function Canvas({
   onColorPick,
   onSelectionChange,
   selection,
+  showGrid = true,
+  onZoomChange,
 }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<WebGLRenderer | null>(null);
@@ -82,6 +86,12 @@ export function Canvas({
   const isInitialLoadRef = useRef(true);
 
   useEffect(() => {
+    if (rendererRef.current) {
+      rendererRef.current.setShowGrid(showGrid);
+    }
+  }, [showGrid]);
+
+  useEffect(() => {
     if (!imageData || !rendererRef.current) return;
 
     const editCanvas = document.createElement('canvas');
@@ -109,6 +119,9 @@ export function Canvas({
       const img = new Image();
       img.onload = () => {
         rendererRef.current?.loadImage(img);
+        if (rendererRef.current) {
+          onZoomChange?.(rendererRef.current.getZoom());
+        }
       };
       img.src = editCanvas.toDataURL();
       isInitialLoadRef.current = false;
@@ -116,7 +129,7 @@ export function Canvas({
       // Subsequent updates: use updateFromImageData to preserve camera position
       rendererRef.current.updateFromImageData(imageData);
     }
-  }, [imageData]);
+  }, [imageData, onZoomChange]);
 
   const hexToRgba = useCallback((hex: string, alpha: number = 255): [number, number, number, number] => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -534,7 +547,8 @@ export function Canvas({
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
     const currentZoom = rendererRef.current.getZoom();
     rendererRef.current.setZoom(currentZoom * zoomFactor);
-  }, []);
+    onZoomChange?.(rendererRef.current.getZoom());
+  }, [onZoomChange]);
 
   const getCursor = useCallback(() => {
     if (isPanning) return 'grabbing';
