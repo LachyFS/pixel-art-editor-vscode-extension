@@ -2,7 +2,7 @@
   "name": "pixel-art-editor",
   "displayName": "Pixel Art Editor",
   "description": "Edit images as pixel art in a custom webview editor",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "LachyFS",
   "repository": {
     "type": "git",
