@@ -11,11 +11,13 @@ export type ResizeAnchor =
   | 'bottom-center'
   | 'bottom-right';
 
+export type ResizeMode = 'canvas' | 'scale';
+
 interface ResizeDialogProps {
   currentWidth: number;
   currentHeight: number;
   imageData: ImageData;
-  onResize: (width: number, height: number, anchor: ResizeAnchor) => void;
+  onResize: (width: number, height: number, anchor: ResizeAnchor, mode: ResizeMode) => void;
   onCancel: () => void;
 }
 
@@ -28,8 +30,9 @@ export function ResizeDialog({
 }: ResizeDialogProps) {
   const [width, setWidth] = useState(currentWidth);
   const [height, setHeight] = useState(currentHeight);
-  const [maintainAspectRatio, setMaintainAspectRatio] = useState(false);
+  const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [anchor, setAnchor] = useState<ResizeAnchor>('top-left');
+  const [mode, setMode] = useState<ResizeMode>('scale');
   const aspectRatio = currentWidth / currentHeight;
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -65,53 +68,65 @@ export function ResizeDialog({
       }
     }
 
-    // Calculate where the original image should be placed based on anchor
-    let offsetX = 0;
-    let offsetY = 0;
-
-    if (anchor.endsWith('-center') || anchor === 'middle-center') {
-      offsetX = Math.floor((width - currentWidth) / 2);
-    } else if (anchor.endsWith('-right')) {
-      offsetX = width - currentWidth;
-    }
-
-    if (anchor.startsWith('middle-')) {
-      offsetY = Math.floor((height - currentHeight) / 2);
-    } else if (anchor.startsWith('bottom-')) {
-      offsetY = height - currentHeight;
-    }
-
     // Create a temp canvas with the original image
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = currentWidth;
     tempCanvas.height = currentHeight;
     const tempCtx = tempCanvas.getContext('2d');
-    if (tempCtx) {
-      tempCtx.putImageData(imageData, 0, 0);
+    if (!tempCtx) return;
+    tempCtx.putImageData(imageData, 0, 0);
 
-      // Draw scaled preview
+    // Use nearest-neighbor interpolation for pixel art
+    ctx.imageSmoothingEnabled = false;
+
+    if (mode === 'scale') {
+      // Scale mode: stretch the image to fill the new dimensions
+      ctx.drawImage(
+        tempCanvas,
+        0, 0, currentWidth, currentHeight,
+        0, 0, previewWidth, previewHeight
+      );
+    } else {
+      // Canvas mode: position the original image based on anchor
+      let offsetX = 0;
+      let offsetY = 0;
+
+      if (anchor.endsWith('-center') || anchor === 'middle-center') {
+        offsetX = Math.floor((width - currentWidth) / 2);
+      } else if (anchor.endsWith('-right')) {
+        offsetX = width - currentWidth;
+      }
+
+      if (anchor.startsWith('middle-')) {
+        offsetY = Math.floor((height - currentHeight) / 2);
+      } else if (anchor.startsWith('bottom-')) {
+        offsetY = height - currentHeight;
+      }
+
+      // Draw the original image at the anchor position
       ctx.drawImage(
         tempCanvas,
         0, 0, currentWidth, currentHeight,
         offsetX * scale, offsetY * scale, currentWidth * scale, currentHeight * scale
       );
+
+      // Draw dashed border around original image position
+      ctx.strokeStyle = '#888888';
+      ctx.setLineDash([2, 2]);
+      ctx.strokeRect(
+        offsetX * scale + 0.5,
+        offsetY * scale + 0.5,
+        currentWidth * scale - 1,
+        currentHeight * scale - 1
+      );
     }
 
     // Draw border around the new canvas area
+    ctx.setLineDash([]);
     ctx.strokeStyle = '#5294e2';
     ctx.lineWidth = 1;
     ctx.strokeRect(0.5, 0.5, previewWidth - 1, previewHeight - 1);
-
-    // Draw dashed border around original image position
-    ctx.strokeStyle = '#888888';
-    ctx.setLineDash([2, 2]);
-    ctx.strokeRect(
-      offsetX * scale + 0.5,
-      offsetY * scale + 0.5,
-      currentWidth * scale - 1,
-      currentHeight * scale - 1
-    );
-  }, [width, height, anchor, imageData, currentWidth, currentHeight]);
+  }, [width, height, anchor, imageData, currentWidth, currentHeight, mode]);
 
   const handleWidthChange = useCallback(
     (newWidth: number) => {
@@ -138,9 +153,9 @@ export function ResizeDialog({
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      onResize(width, height, anchor);
+      onResize(width, height, anchor, mode);
     },
-    [width, height, anchor, onResize]
+    [width, height, anchor, mode, onResize]
   );
 
   const handleKeyDown = useCallback(
@@ -167,8 +182,25 @@ export function ResizeDialog({
   return (
     <div className="resize-dialog-overlay" onKeyDown={handleKeyDown}>
       <div className="resize-dialog">
-        <h3 className="resize-dialog-title">Resize Canvas</h3>
+        <h3 className="resize-dialog-title">Resize</h3>
         <form onSubmit={handleSubmit}>
+          <div className="resize-mode-toggle">
+            <button
+              type="button"
+              className={`resize-mode-button ${mode === 'scale' ? 'active' : ''}`}
+              onClick={() => setMode('scale')}
+            >
+              Scale Image
+            </button>
+            <button
+              type="button"
+              className={`resize-mode-button ${mode === 'canvas' ? 'active' : ''}`}
+              onClick={() => setMode('canvas')}
+            >
+              Resize Canvas
+            </button>
+          </div>
+
           <div className="resize-dimensions">
             <div className="resize-input-group">
               <label htmlFor="resize-width">Width</label>
@@ -208,20 +240,22 @@ export function ResizeDialog({
             </label>
           </div>
 
-          <div className="resize-anchor-section">
-            <label className="resize-anchor-label">Anchor</label>
-            <div className="resize-anchor-grid">
-              {anchorPositions.map((pos) => (
-                <button
-                  key={pos}
-                  type="button"
-                  className={`resize-anchor-button ${anchor === pos ? 'active' : ''}`}
-                  onClick={() => setAnchor(pos)}
-                  title={pos.replace('-', ' ')}
-                />
-              ))}
+          {mode === 'canvas' && (
+            <div className="resize-anchor-section">
+              <label className="resize-anchor-label">Anchor</label>
+              <div className="resize-anchor-grid">
+                {anchorPositions.map((pos) => (
+                  <button
+                    key={pos}
+                    type="button"
+                    className={`resize-anchor-button ${anchor === pos ? 'active' : ''}`}
+                    onClick={() => setAnchor(pos)}
+                    title={pos.replace('-', ' ')}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="resize-preview-section">
             <label className="resize-anchor-label">Preview</label>
@@ -241,7 +275,7 @@ export function ResizeDialog({
               Cancel
             </button>
             <button type="submit" className="resize-button confirm">
-              Resize
+              {mode === 'scale' ? 'Scale' : 'Resize'}
             </button>
           </div>
         </form>

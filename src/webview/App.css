@@ -507,6 +507,36 @@ body {
   border-bottom: 1px solid var(--border-light);
 }
 
+.resize-mode-toggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.resize-mode-button {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 10px;
+  font-weight: 500;
+  background: var(--bg-button);
+  border: 1px solid var(--border-dark);
+  border-radius: 2px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.resize-mode-button:hover {
+  background: var(--bg-button-hover);
+  color: var(--text-primary);
+}
+
+.resize-mode-button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
 .resize-dimensions {
   display: flex;
   gap: 8px;

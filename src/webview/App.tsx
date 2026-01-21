@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Canvas, type Tool, type Selection } from './components/Canvas';
 import { Toolbar } from './components/Toolbar';
 import { ColorPicker } from './components/ColorPicker';
-import { ResizeDialog, type ResizeAnchor } from './components/ResizeDialog';
+import { ResizeDialog, type ResizeAnchor, type ResizeMode } from './components/ResizeDialog';
 import { useVSCodeApi, type VSCodeMessage } from './hooks/useVSCodeApi';
 import './App.css';
 
@@ -142,46 +142,67 @@ function App() {
     setTool(newTool);
   }, [tool]);
 
-  const handleResize = useCallback((newWidth: number, newHeight: number, anchor: ResizeAnchor) => {
+  const handleResize = useCallback((newWidth: number, newHeight: number, anchor: ResizeAnchor, mode: ResizeMode) => {
     if (!imageData) return;
 
     const newImageData = new ImageData(newWidth, newHeight);
 
-    // Calculate offset based on anchor
-    // Anchor determines where the ORIGINAL image is placed in the new canvas
-    let offsetX = 0;
-    let offsetY = 0;
+    if (mode === 'scale') {
+      // Scale mode: use nearest-neighbor interpolation for pixel art
+      const scaleX = imageData.width / newWidth;
+      const scaleY = imageData.height / newHeight;
 
-    // Horizontal positioning (second part of anchor name)
-    if (anchor.endsWith('-center') || anchor === 'middle-center') {
-      offsetX = Math.floor((newWidth - imageData.width) / 2);
-    } else if (anchor.endsWith('-right')) {
-      offsetX = newWidth - imageData.width;
-    }
-    // -left means offsetX = 0 (default)
+      for (let y = 0; y < newHeight; y++) {
+        for (let x = 0; x < newWidth; x++) {
+          // Find the corresponding pixel in the source image
+          const srcX = Math.floor(x * scaleX);
+          const srcY = Math.floor(y * scaleY);
 
-    // Vertical positioning (first part of anchor name)
-    if (anchor.startsWith('middle-')) {
-      offsetY = Math.floor((newHeight - imageData.height) / 2);
-    } else if (anchor.startsWith('bottom-')) {
-      offsetY = newHeight - imageData.height;
-    }
-    // top- means offsetY = 0 (default)
+          const srcIndex = (srcY * imageData.width + srcX) * 4;
+          const dstIndex = (y * newWidth + x) * 4;
 
-    // Copy pixels from old image to new image at the calculated offset
-    for (let y = 0; y < imageData.height; y++) {
-      for (let x = 0; x < imageData.width; x++) {
-        const newX = x + offsetX;
-        const newY = y + offsetY;
+          newImageData.data[dstIndex] = imageData.data[srcIndex];
+          newImageData.data[dstIndex + 1] = imageData.data[srcIndex + 1];
+          newImageData.data[dstIndex + 2] = imageData.data[srcIndex + 2];
+          newImageData.data[dstIndex + 3] = imageData.data[srcIndex + 3];
+        }
+      }
+    } else {
+      // Canvas mode: position the original image based on anchor
+      let offsetX = 0;
+      let offsetY = 0;
 
-        if (newX >= 0 && newX < newWidth && newY >= 0 && newY < newHeight) {
-          const oldIndex = (y * imageData.width + x) * 4;
-          const newIndex = (newY * newWidth + newX) * 4;
+      // Horizontal positioning (second part of anchor name)
+      if (anchor.endsWith('-center') || anchor === 'middle-center') {
+        offsetX = Math.floor((newWidth - imageData.width) / 2);
+      } else if (anchor.endsWith('-right')) {
+        offsetX = newWidth - imageData.width;
+      }
+      // -left means offsetX = 0 (default)
 
-          newImageData.data[newIndex] = imageData.data[oldIndex];
-          newImageData.data[newIndex + 1] = imageData.data[oldIndex + 1];
-          newImageData.data[newIndex + 2] = imageData.data[oldIndex + 2];
-          newImageData.data[newIndex + 3] = imageData.data[oldIndex + 3];
+      // Vertical positioning (first part of anchor name)
+      if (anchor.startsWith('middle-')) {
+        offsetY = Math.floor((newHeight - imageData.height) / 2);
+      } else if (anchor.startsWith('bottom-')) {
+        offsetY = newHeight - imageData.height;
+      }
+      // top- means offsetY = 0 (default)
+
+      // Copy pixels from old image to new image at the calculated offset
+      for (let y = 0; y < imageData.height; y++) {
+        for (let x = 0; x < imageData.width; x++) {
+          const newX = x + offsetX;
+          const newY = y + offsetY;
+
+          if (newX >= 0 && newX < newWidth && newY >= 0 && newY < newHeight) {
+            const oldIndex = (y * imageData.width + x) * 4;
+            const newIndex = (newY * newWidth + newX) * 4;
+
+            newImageData.data[newIndex] = imageData.data[oldIndex];
+            newImageData.data[newIndex + 1] = imageData.data[oldIndex + 1];
+            newImageData.data[newIndex + 2] = imageData.data[oldIndex + 2];
+            newImageData.data[newIndex + 3] = imageData.data[oldIndex + 3];
+          }
         }
       }
     }
