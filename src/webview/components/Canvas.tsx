@@ -79,6 +79,8 @@ export function Canvas({
     };
   }, []);
 
+  const isInitialLoadRef = useRef(true);
+
   useEffect(() => {
     if (!imageData || !rendererRef.current) return;
 
@@ -102,11 +104,18 @@ export function Canvas({
       previewCtxRef.current = previewCtx;
     }
 
-    const img = new Image();
-    img.onload = () => {
-      rendererRef.current?.loadImage(img);
-    };
-    img.src = editCanvas.toDataURL();
+    if (isInitialLoadRef.current) {
+      // First load: use loadImage which centers the view
+      const img = new Image();
+      img.onload = () => {
+        rendererRef.current?.loadImage(img);
+      };
+      img.src = editCanvas.toDataURL();
+      isInitialLoadRef.current = false;
+    } else {
+      // Subsequent updates: use updateFromImageData to preserve camera position
+      rendererRef.current.updateFromImageData(imageData);
+    }
   }, [imageData]);
 
   const hexToRgba = useCallback((hex: string, alpha: number = 255): [number, number, number, number] => {
