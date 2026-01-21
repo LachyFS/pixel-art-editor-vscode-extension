@@ -4,6 +4,10 @@
   "description": "Edit images as pixel art in a custom webview editor",
   "version": "0.0.1",
   "publisher": "LachyFS",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LachyFS/pixel-art-editor-vscode-extension"
+  },
   "private": true,
   "type": "module",
   "engines": {
@@ -52,6 +56,7 @@
     ]
   },
   "scripts": {
+    "publish:all": "vsce publish & vsce publish",
     "dev": "vite",
     "build": "npm run build:extension && npm run build:webview",
     "build:extension": "node esbuild.config.js",
