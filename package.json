@@ -1,0 +1,86 @@
+{
+  "name": "pixel-art-editor",
+  "displayName": "Pixel Art Editor",
+  "description": "Edit images as pixel art in a custom webview editor",
+  "version": "0.0.1",
+  "publisher": "LachyFS",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "icon": "media/icon.png",
+  "activationEvents": [
+    "onCommand:pixelArtEditor.openEditor"
+  ],
+  "main": "./out/extension/extension.cjs",
+  "contributes": {
+    "commands": [
+      {
+        "command": "pixelArtEditor.openEditor",
+        "title": "Open in Pixel Art Editor",
+        "icon": {
+          "light": "media/icon.svg",
+          "dark": "media/icon.svg"
+        }
+      }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "pixelArtEditor.openEditor",
+          "when": "resourcePath =~ /\\.(png|jpg|jpeg|gif|bmp)$/i"
+        }
+      ]
+    },
+    "customEditors": [
+      {
+        "viewType": "pixelArtEditor.editor",
+        "displayName": "Pixel Art Editor",
+        "selector": [
+          { "filenamePattern": "*.png" },
+          { "filenamePattern": "*.jpg" },
+          { "filenamePattern": "*.jpeg" },
+          { "filenamePattern": "*.gif" },
+          { "filenamePattern": "*.bmp" }
+        ],
+        "priority": "option"
+      }
+    ]
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run build:extension && npm run build:webview",
+    "build:extension": "node esbuild.config.js",
+    "build:webview": "vite build",
+    "watch": "npm run watch:extension & npm run watch:webview",
+    "watch:extension": "node esbuild.config.js --watch",
+    "watch:webview": "vite build --watch",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "vscode:prepublish": "npm run build"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@types/vscode": "^1.80.0",
+    "@vitejs/plugin-react": "^5.1.1",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^7.2.4"
+  }
+}

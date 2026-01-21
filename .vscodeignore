@@ -1,0 +1,16 @@
+.vscode/**
+.temp/**
+.claude/**
+node_modules/**
+src/**
+public/**
+*.ts
+*.map
+.gitignore
+esbuild.config.js
+eslint.config.js
+index.html
+pnpm-lock.yaml
+tsconfig*.json
+vite.config.ts
+**/*.md
