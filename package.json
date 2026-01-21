@@ -57,6 +57,8 @@
   },
   "scripts": {
     "publish:all": "npm run publish:vsce ; npm run publish:ovsx",
+    "publish:vsce": "vsce publish",
+    "publish:ovsx": "ovsx publish",
     "dev": "vite",
     "build": "npm run build:extension && npm run build:webview",
     "build:extension": "node esbuild.config.js",
