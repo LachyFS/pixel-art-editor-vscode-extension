@@ -27,8 +27,8 @@
         "command": "pixelArtEditor.openEditor",
         "title": "Open in Pixel Art Editor",
         "icon": {
-          "light": "media/icon.svg",
-          "dark": "media/icon.svg"
+          "light": "media/icon-64.png",
+          "dark": "media/icon-64.png"
         }
       }
     ],
