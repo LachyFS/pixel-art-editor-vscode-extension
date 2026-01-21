@@ -2,7 +2,7 @@
   "name": "pixel-art-editor",
   "displayName": "Pixel Art Editor",
   "description": "Edit images as pixel art in a custom webview editor",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "LachyFS",
   "repository": {
     "type": "git",
@@ -56,7 +56,7 @@
     ]
   },
   "scripts": {
-    "publish:all": "vsce publish & vsce publish",
+    "publish:all": "npm run publish:vsce ; npm run publish:ovsx",
     "dev": "vite",
     "build": "npm run build:extension && npm run build:webview",
     "build:extension": "node esbuild.config.js",
