@@ -12,6 +12,8 @@ export type Tool =
   | 'ellipse'
   | 'selection';
 
+export type BrushShape = 'square' | 'circle' | 'diamond' | 'horizontal' | 'vertical' | 'slash' | 'backslash';
+
 export interface Selection {
   x: number;
   y: number;
@@ -24,6 +26,7 @@ interface CanvasProps {
   tool: Tool;
   color: string;
   brushSize: number;
+  brushShape: BrushShape;
   opacity: number;
   onPixelChange: (imageData: ImageData) => void;
   onColorPick: (color: string) => void;
@@ -38,6 +41,7 @@ export function Canvas({
   tool,
   color,
   brushSize,
+  brushShape,
   opacity,
   onPixelChange,
   onColorPick,
@@ -148,29 +152,95 @@ export function Canvas({
     return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
   }, []);
 
+  const getBrushPixels = useCallback((size: number, shape: BrushShape): { dx: number; dy: number }[] => {
+    const pixels: { dx: number; dy: number }[] = [];
+    const half = Math.floor(size / 2);
+
+    switch (shape) {
+      case 'square':
+        for (let dy = -half; dy < size - half; dy++) {
+          for (let dx = -half; dx < size - half; dx++) {
+            pixels.push({ dx, dy });
+          }
+        }
+        break;
+
+      case 'circle': {
+        const radius = size / 2;
+        for (let dy = -half; dy < size - half; dy++) {
+          for (let dx = -half; dx < size - half; dx++) {
+            // Use distance from center, offset by 0.5 to sample pixel center
+            const dist = Math.sqrt((dx + 0.5) ** 2 + (dy + 0.5) ** 2);
+            if (dist <= radius) {
+              pixels.push({ dx, dy });
+            }
+          }
+        }
+        break;
+      }
+
+      case 'diamond':
+        for (let dy = -half; dy < size - half; dy++) {
+          for (let dx = -half; dx < size - half; dx++) {
+            // Manhattan distance for diamond shape
+            if (Math.abs(dx) + Math.abs(dy) <= half) {
+              pixels.push({ dx, dy });
+            }
+          }
+        }
+        break;
+
+      case 'horizontal':
+        for (let dx = -half; dx < size - half; dx++) {
+          pixels.push({ dx, dy: 0 });
+        }
+        break;
+
+      case 'vertical':
+        for (let dy = -half; dy < size - half; dy++) {
+          pixels.push({ dx: 0, dy });
+        }
+        break;
+
+      case 'slash':
+        // Diagonal line from bottom-left to top-right
+        for (let i = -half; i < size - half; i++) {
+          pixels.push({ dx: i, dy: -i });
+        }
+        break;
+
+      case 'backslash':
+        // Diagonal line from top-left to bottom-right
+        for (let i = -half; i < size - half; i++) {
+          pixels.push({ dx: i, dy: i });
+        }
+        break;
+    }
+
+    return pixels;
+  }, []);
+
   const drawBrush = useCallback((centerX: number, centerY: number, ctx: CanvasRenderingContext2D, isEraser: boolean = false) => {
     const editCanvas = editCanvasRef.current;
     if (!editCanvas || !rendererRef.current) return;
 
-    const half = Math.floor(brushSize / 2);
     const alphaValue = Math.round(opacity * 255);
     const [r, g, b] = hexToRgba(color, alphaValue);
+    const pixels = getBrushPixels(brushSize, brushShape);
 
-    for (let dy = -half; dy < brushSize - half; dy++) {
-      for (let dx = -half; dx < brushSize - half; dx++) {
-        const px = centerX + dx;
-        const py = centerY + dy;
-        if (!rendererRef.current.isPixelInBounds(px, py)) continue;
+    for (const { dx, dy } of pixels) {
+      const px = centerX + dx;
+      const py = centerY + dy;
+      if (!rendererRef.current.isPixelInBounds(px, py)) continue;
 
-        if (isEraser) {
-          ctx.clearRect(px, py, 1, 1);
-        } else {
-          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alphaValue / 255})`;
-          ctx.fillRect(px, py, 1, 1);
-        }
+      if (isEraser) {
+        ctx.clearRect(px, py, 1, 1);
+      } else {
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alphaValue / 255})`;
+        ctx.fillRect(px, py, 1, 1);
       }
     }
-  }, [brushSize, color, opacity, hexToRgba]);
+  }, [brushSize, brushShape, color, opacity, hexToRgba, getBrushPixels]);
 
   const drawPixel = useCallback((x: number, y: number) => {
     const ctx = editCtxRef.current;

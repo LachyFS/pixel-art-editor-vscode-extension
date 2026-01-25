@@ -300,6 +300,13 @@ body {
   border-radius: 0;
 }
 
+.brush-preview-canvas {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
 .brush-controls {
   flex: 1;
   min-width: 0;
@@ -374,6 +381,45 @@ body {
 
 .tool-button.active .tool-shortcut {
   opacity: 0.8;
+}
+
+/* Brush shape grid */
+.brush-shape-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.brush-shape-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  background: var(--vscode-button-secondaryBackground, var(--bg-button));
+  border: none;
+  border-radius: 2px;
+  color: var(--vscode-button-secondaryForeground, var(--text-primary));
+  cursor: pointer;
+  transition: background 0.1s ease;
+  padding: 0;
+}
+
+.brush-shape-button:hover {
+  background: var(--vscode-button-secondaryHoverBackground, var(--bg-button-hover));
+}
+
+.brush-shape-button:active {
+  background: var(--bg-button-active);
+}
+
+.brush-shape-button.active {
+  background: var(--vscode-button-background, var(--accent));
+  color: var(--vscode-button-foreground, white);
+}
+
+.brush-shape-button .shape-icon {
+  font-size: 12px;
+  line-height: 1;
 }
 
 /* Transform grid */
@@ -839,7 +885,7 @@ body {
 .canvas-overlay {
   position: absolute;
   top: 8px;
-  right: 8px;
+  left: 8px;
   display: flex;
   gap: 4px;
   z-index: 10;
@@ -887,4 +933,76 @@ body {
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(4px);
+}
+
+/* Palette Reducer Dialog */
+.palette-reducer-dialog {
+  min-width: 280px;
+}
+
+.palette-color-count-section {
+  margin-bottom: 10px;
+}
+
+.palette-count-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.palette-slider {
+  flex: 1;
+}
+
+.palette-count-input {
+  width: 56px;
+  padding: 5px 6px;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-dark);
+  border-radius: 2px;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  text-align: center;
+}
+
+.palette-count-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.palette-colors-section {
+  margin-bottom: 10px;
+}
+
+.palette-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  background: var(--bg-dark);
+  padding: 4px;
+  border-radius: 2px;
+  border: 1px solid var(--border-dark);
+}
+
+.palette-preview-swatch {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  border: 1px solid var(--border-dark);
+  cursor: default;
+}
+
+.palette-preview-swatch:hover {
+  border-color: var(--accent);
+}
+
+.palette-more-indicator {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: var(--text-muted);
+  background: var(--bg-button);
+  border-radius: 2px;
 }

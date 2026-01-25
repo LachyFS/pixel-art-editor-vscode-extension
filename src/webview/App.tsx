@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Canvas, type Tool, type Selection } from './components/Canvas';
+import { Canvas, type Tool, type Selection, type BrushShape } from './components/Canvas';
 import { Toolbar } from './components/Toolbar';
 import { ColorPicker } from './components/ColorPicker';
 import { ResizeDialog, type ResizeAnchor, type ResizeMode } from './components/ResizeDialog';
+import { PaletteReducerDialog } from './components/PaletteReducerDialog';
+import { reduceImagePalette, type Algorithm } from './utils/paletteReducer';
 import { useVSCodeApi, type VSCodeMessage } from './hooks/useVSCodeApi';
 import './App.css';
 
@@ -11,12 +13,13 @@ const MAX_HISTORY = 50;
 function App() {
   const { onMessage, notifyReady, sendEdit } = useVSCodeApi();
   const [imageData, setImageData] = useState<ImageData | null>(null);
-  const [fileName, setFileName] = useState<string>('');
   const [tool, setTool] = useState<Tool>('pencil');
   const [color, setColor] = useState<string>('#000000');
   const [brushSize, setBrushSize] = useState(1);
+  const [brushShape, setBrushShape] = useState<BrushShape>('square');
   const [opacity, setOpacity] = useState(1);
   const [showResizeDialog, setShowResizeDialog] = useState(false);
+  const [showPaletteReducerDialog, setShowPaletteReducerDialog] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [showGrid, setShowGrid] = useState(true);
   const [zoom, setZoom] = useState(1);
@@ -45,7 +48,6 @@ function App() {
           }
         };
         img.src = message.body.imageData;
-        setFileName(message.body.fileName);
       }
     });
 
@@ -291,6 +293,17 @@ function App() {
     handlePixelChange(newData);
   }, [imageData, handlePixelChange]);
 
+  const handlePaletteReduce = useCallback((
+    colorCount: number,
+    algorithm: Algorithm,
+    dithering: boolean
+  ) => {
+    if (!imageData) return;
+    const reducedData = reduceImagePalette(imageData, { colorCount, algorithm, dithering });
+    handlePixelChange(reducedData);
+    setShowPaletteReducerDialog(false);
+  }, [imageData, handlePixelChange]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -309,6 +322,29 @@ function App() {
         e.preventDefault();
         handleRedo();
         return;
+      }
+
+      // Brush shape cycling with Shift+[ and Shift+]
+      const brushShapes: BrushShape[] = ['square', 'circle', 'diamond', 'horizontal', 'vertical', 'slash', 'backslash'];
+      if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (e.key === '{' || e.key === '[') {
+          e.preventDefault();
+          setBrushShape((prev) => {
+            const currentIndex = brushShapes.indexOf(prev);
+            const newIndex = (currentIndex - 1 + brushShapes.length) % brushShapes.length;
+            return brushShapes[newIndex];
+          });
+          return;
+        }
+        if (e.key === '}' || e.key === ']') {
+          e.preventDefault();
+          setBrushShape((prev) => {
+            const currentIndex = brushShapes.indexOf(prev);
+            const newIndex = (currentIndex + 1) % brushShapes.length;
+            return brushShapes[newIndex];
+          });
+          return;
+        }
       }
 
       // Tool shortcuts
@@ -361,7 +397,6 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <span className="file-name">{fileName || 'Pixel Art Editor'}</span>
         <span className="image-info">
           {imageData && `${imageData.width} × ${imageData.height}`}
         </span>
@@ -373,6 +408,8 @@ function App() {
             onToolChange={handleToolChange}
             brushSize={brushSize}
             onBrushSizeChange={setBrushSize}
+            brushShape={brushShape}
+            onBrushShapeChange={setBrushShape}
             opacity={opacity}
             onOpacityChange={setOpacity}
             onUndo={handleUndo}
@@ -383,6 +420,7 @@ function App() {
             onFlipVertical={handleFlipVertical}
             onRotateCW={handleRotateCW}
             onRotateCCW={handleRotateCCW}
+            onPaletteReduce={() => setShowPaletteReducerDialog(true)}
           />
           <ColorPicker color={color} onColorChange={setColor} />
         </aside>
@@ -393,6 +431,7 @@ function App() {
               tool={tool}
               color={color}
               brushSize={brushSize}
+              brushShape={brushShape}
               opacity={opacity}
               onPixelChange={handlePixelChange}
               onColorPick={handleColorPick}
@@ -417,7 +456,7 @@ function App() {
         </main>
       </div>
       <footer className="footer">
-        <span>Scroll to zoom • Right-click/Alt+drag to pan • Ctrl+Z undo • [ ] brush size</span>
+        <span>Scroll to zoom • Right-click/Alt+drag to pan • Ctrl+Z undo • [ ] brush size • Shift+[ ] brush shape</span>
       </footer>
       {showResizeDialog && imageData && (
         <ResizeDialog
@@ -426,6 +465,13 @@ function App() {
           imageData={imageData}
           onResize={handleResize}
           onCancel={handleResizeCancel}
+        />
+      )}
+      {showPaletteReducerDialog && imageData && (
+        <PaletteReducerDialog
+          imageData={imageData}
+          onApply={handlePaletteReduce}
+          onCancel={() => setShowPaletteReducerDialog(false)}
         />
       )}
     </div>
